@@ -13,6 +13,10 @@ public class Echo : MonoBehaviour {
     public GameObject revGo;
     public GameObject sndGo;
 
+    // 用Select来改写服务器端.         
+    // checkRead列表
+    static List<Socket> checkRead = new List<Socket>();
+
     private TMP_Text revTxt;
     private TMP_InputField sndTxt;
     Socket socket;
@@ -29,25 +33,38 @@ public class Echo : MonoBehaviour {
         socket.Connect(iPEP); // 改写成异步 BeginConnect + EndConnect
         // socket.BeginConnect(iPEP, ConnectCallback, socket);
     }
+// 由于跑在Update方法中,每帧都在判断,性能较差,许多游戏中用的并不是这种方式,而是异步程序,
+// 所以在本系列中,服务器端用Select服务器,客户端中使用异步程序.[这里现在是异步吗？还是说用先前的异步呢？这里是同步方法]    
     private void Update() {
-        // revTxt.text = recvStr;
         if (socket == null)
             return;
-        // 有可读数据
-        if (socket.Poll(-1, SelectMode.SelectRead)) {
+        checkRead.Clear();
+        checkRead.Add(socket);
+        // Select 
+        Socket.Select(checkRead, null, null, 0);
+        foreach (var item in checkRead) {
             byte[] readBuff = new byte[1024];
             int count = socket.Receive(readBuff);
-            string recStr = System.Text.Encoding.Default.GetString(readBuff, 0,count);
-            revTxt.text = recvStr;
-        }
+            string recStr = System.Text.Encoding.Default.GetString(readBuff, 0, count);
+            revTxt.text += recStr + "\n";
+        }        
+        // revTxt.text = recvStr; // v 1
+        // if (socket == null)    // v2
+        //     return;
+        // // 有可读数据
+        // if (socket.Poll(0, SelectMode.SelectRead)) {
+        //     byte[] readBuff = new byte[1024];
+        //     int count = socket.Receive(readBuff);
+        //     string recStr = System.Text.Encoding.Default.GetString(readBuff, 0,count);
+        //     revTxt.text = recvStr;
+        // }
     }
 // 我觉得这里我什么地方写得不对，消息并没能真正发送成功，服务器接收不到    
     public void sendBtn() {
         //send
         if (socket == null)
             return;
-        if (socket.Poll(-1, SelectMode.SelectWrite))
-        {
+        if (socket.Poll(0, SelectMode.SelectWrite)) {
             string sendStr = sndTxt.text;
             byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
             socket.Send(sendBytes);
