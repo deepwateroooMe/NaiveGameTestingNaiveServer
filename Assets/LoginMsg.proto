@@ -1,0 +1,9 @@
+﻿message MsgMove{
+    optional int32 x = ;
+    optional int32 y = ;
+    optional int32 z = ;
+}
+message LoginMsg{
+    optional string userName =  [default = "vincent"];
+    optional string userPsw =  [default = "123456"];
+}
