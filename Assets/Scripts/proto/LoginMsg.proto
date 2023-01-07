@@ -1,0 +1,12 @@
+﻿syntax = "proto2";
+
+message MsgMove {
+    optional int32 x = 1;
+    optional int32 y = 2;
+    optional int32 z = 3;
+}
+
+message LoginMsg {
+    optional string userName = 123;
+    optional string userPsw = 123456;
+}
